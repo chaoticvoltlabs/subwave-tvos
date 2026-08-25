@@ -26,10 +26,10 @@ struct ScheduleGuideView: View {
             if let loadError, response == nil {
                 ContentUnavailableView(loadError, systemImage: "calendar.badge.exclamationmark")
             } else if blocks.isEmpty {
-                ContentUnavailableView("No shows scheduled today.", systemImage: "calendar")
+                ContentUnavailableView("Nothing left on today's schedule.", systemImage: "calendar")
             } else {
                 List {
-                    Section("Today") {
+                    Section("Now & Next") {
                         ForEach(blocks) { block in
                             ScheduleBlockRow(block: block, isNow: isNow(block))
                         }
@@ -45,15 +45,23 @@ struct ScheduleGuideView: View {
         }
     }
 
+    /// Today's blocks that haven't fully aired yet — the on-air one plus
+    /// whatever's still ahead. A guide is for what's coming, not a log of
+    /// what already played.
     private var blocks: [ScheduleBlock] {
-        response?.blocksForToday(timeZone: stationTimeZone) ?? []
+        let currentHour = currentHour
+        return (response?.blocksForToday(timeZone: stationTimeZone) ?? [])
+            .filter { $0.endHour > currentHour }
+    }
+
+    private var currentHour: Int {
+        var calendar = Calendar(identifier: .gregorian)
+        if let stationTimeZone { calendar.timeZone = stationTimeZone }
+        return calendar.component(.hour, from: Date())
     }
 
     private func isNow(_ block: ScheduleBlock) -> Bool {
-        var calendar = Calendar(identifier: .gregorian)
-        if let stationTimeZone { calendar.timeZone = stationTimeZone }
-        let hour = calendar.component(.hour, from: Date())
-        return (block.startHour..<block.endHour).contains(hour)
+        (block.startHour..<block.endHour).contains(currentHour)
     }
 
     private func startPolling() {

@@ -67,10 +67,12 @@ struct NowPlayingView: View {
                 }
             }
             .frame(maxWidth: .infinity)
+            .focusSection()
 
             if let client {
                 SidePanelView(client: client, stationTimeZone: stationTimeZone)
                     .frame(width: 480)
+                    .focusSection()
             }
         }
         .padding(60)
