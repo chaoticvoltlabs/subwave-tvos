@@ -2,20 +2,27 @@
 //  NowPlaying.swift
 //  subwave-tvos
 //
-//  Shapes mirror docs/api.md's /now-playing and /dj examples in the subwave
-//  repo (controller/src/connect/catalog.ts). Fields beyond title/artist are
-//  only present once a track is analysed, so almost everything here is
-//  optional rather than assumed present.
+//  docs/api.md's /now-playing example is simplified; the deployed shape
+//  (confirmed live against radio.kluit.se) nests several fields as objects
+//  rather than the doc's flat strings/ints. `context` is richer still (time
+//  of day, weather, festival, clock — all objects, not the doc's plain
+//  strings) and unused by this app's UI, so it's deliberately left
+//  unmodeled rather than half-guessed; Codable ignores JSON keys with no
+//  matching property.
 
 import Foundation
 
 struct NowPlayingResponse: Codable {
     var nowPlaying: Track?
-    var context: StationContext?
     var dj: DJSummary?
-    var listeners: Int?
+    var listeners: ListenerCount?
     var streamOnline: Bool?
     var stream: StreamDescriptor?
+}
+
+struct ListenerCount: Codable {
+    var current: Int?
+    var peak: Int?
 }
 
 struct Track: Codable, Equatable {
@@ -30,12 +37,6 @@ struct Track: Codable, Equatable {
 
     /// `/cover/:id` proxies Subsonic art for this id, when present.
     var coverID: String? { subsonic_id }
-}
-
-struct StationContext: Codable {
-    var time: String?
-    var weather: String?
-    var dominantMood: String?
 }
 
 struct DJSummary: Codable {

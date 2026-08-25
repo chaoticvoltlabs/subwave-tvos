@@ -36,7 +36,7 @@ struct NowPlayingView: View {
                         .font(.caption)
                         .foregroundStyle(.tertiary)
                 }
-                if let listeners = response?.listeners {
+                if let listeners = response?.listeners?.current {
                     Text("\(listeners) listening")
                         .font(.caption)
                         .foregroundStyle(.tertiary)

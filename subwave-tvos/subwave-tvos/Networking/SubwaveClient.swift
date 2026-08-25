@@ -39,7 +39,7 @@ struct SubwaveClient {
     /// URL) because a station behind its own basic-auth lock needs the same
     /// `Authorization` header every other request here gets.
     func fetchCoverImageData(id: String) async throws -> Data {
-        let url = baseURL.appendingPathComponent("/cover/\(id)")
+        let url = apiURL("/cover/\(id)")
         let request = authorizedRequest(url: url)
         let (data, response) = try await URLSession.shared.data(for: request)
         try Self.validate(response)
@@ -60,6 +60,17 @@ struct SubwaveClient {
 
     // MARK: - Plumbing
 
+    /// The controller's own routes are unprefixed (docs/api.md), but a
+    /// standard production deployment's reverse proxy mounts it at `/api/*`
+    /// alongside the web UI and strips the prefix on the way through
+    /// (docs/deployment.md's Caddyfile route table). The stream mounts and
+    /// listen.pls/.m3u are the exception — those stay at the root, routed
+    /// straight to Icecast, which is why PlayerService builds its URL
+    /// separately rather than going through this helper.
+    private func apiURL(_ path: String) -> URL {
+        baseURL.appendingPathComponent("/api").appendingPathComponent(path)
+    }
+
     private func authorizedRequest(url: URL) -> URLRequest {
         var request = URLRequest(url: url)
         if let credentials {
@@ -72,7 +83,7 @@ struct SubwaveClient {
     }
 
     private func get<T: Decodable>(_ path: String) async throws -> T {
-        let url = baseURL.appendingPathComponent(path)
+        let url = apiURL(path)
         let request = authorizedRequest(url: url)
         let (data, response) = try await URLSession.shared.data(for: request)
         try Self.validate(response)
@@ -80,7 +91,7 @@ struct SubwaveClient {
     }
 
     private func post<Body: Encodable, T: Decodable>(_ path: String, body: Body) async throws -> T {
-        let url = baseURL.appendingPathComponent(path)
+        let url = apiURL(path)
         var request = authorizedRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
