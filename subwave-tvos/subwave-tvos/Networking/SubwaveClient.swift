@@ -39,6 +39,10 @@ struct SubwaveClient {
         try await get("/session")
     }
 
+    func fetchSchedule() async throws -> ScheduleResponse {
+        try await get("/schedule")
+    }
+
     /// Fetches cover art directly (rather than handing `AsyncImage` a bare
     /// URL) because a station behind its own basic-auth lock needs the same
     /// `Authorization` header every other request here gets.

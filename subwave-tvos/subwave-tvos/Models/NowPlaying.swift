@@ -18,6 +18,9 @@ struct NowPlayingResponse: Codable {
     var listeners: ListenerCount?
     var streamOnline: Bool?
     var stream: StreamDescriptor?
+    /// IANA zone, e.g. "Europe/Stockholm" — drives the Clock panel so it
+    /// shows the station's own time, not the viewer's.
+    var timezone: String?
 }
 
 struct ListenerCount: Codable {

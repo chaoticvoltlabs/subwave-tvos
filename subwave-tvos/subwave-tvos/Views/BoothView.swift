@@ -8,9 +8,12 @@
 
 import SwiftUI
 
+/// Embedded in the now-playing side panel — not presented as a sheet, so it
+/// carries no dismiss chrome of its own. Polling starts/stops with SwiftUI's
+/// normal `.task`/`.onDisappear` lifecycle, which fires naturally when the
+/// panel switcher swaps this out for the Guide or Clock panel.
 struct BoothView: View {
     let client: SubwaveClient
-    @Environment(\.dismiss) private var dismiss
 
     @State private var turns: [SessionTurn] = []
     @State private var showName: String?
@@ -20,27 +23,20 @@ struct BoothView: View {
     private static let pollInterval: Duration = .seconds(10)
 
     var body: some View {
-        NavigationStack {
-            Group {
-                if let loadError, turns.isEmpty {
-                    ContentUnavailableView(loadError, systemImage: "mic.slash")
-                } else if turns.isEmpty {
-                    ContentUnavailableView("Booth is quiet.", systemImage: "mic")
-                } else {
-                    List {
-                        Section {
-                            ForEach(visibleTurns.indices, id: \.self) { index in
-                                BoothRow(turn: visibleTurns[index])
-                            }
-                        } header: {
-                            Text(showName ?? "Booth")
+        Group {
+            if let loadError, turns.isEmpty {
+                ContentUnavailableView(loadError, systemImage: "mic.slash")
+            } else if turns.isEmpty {
+                ContentUnavailableView("Booth is quiet.", systemImage: "mic")
+            } else {
+                List {
+                    Section {
+                        ForEach(visibleTurns.indices, id: \.self) { index in
+                            BoothRow(turn: visibleTurns[index])
                         }
+                    } header: {
+                        Text(showName ?? "Booth")
                     }
-                }
-            }
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("Close") { dismiss() }
                 }
             }
         }

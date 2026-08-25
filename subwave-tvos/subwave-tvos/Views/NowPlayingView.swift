@@ -13,7 +13,6 @@ struct NowPlayingView: View {
     @State private var coverImage: UIImage?
     @State private var loadError: String?
     @State private var isPresentingRequest = false
-    @State private var isPresentingBooth = false
     @State private var pollTask: Task<Void, Never>?
 
     private var client: SubwaveClient? { SubwaveClient(station: station) }
@@ -22,53 +21,56 @@ struct NowPlayingView: View {
     private static let pollInterval: Duration = .seconds(15)
 
     var body: some View {
-        VStack(spacing: 32) {
-            coverArt
+        HStack(spacing: 60) {
+            VStack(spacing: 32) {
+                coverArt
 
-            VStack(spacing: 8) {
-                Text(response?.nowPlaying?.title ?? "—")
-                    .font(.title)
-                    .bold()
-                Text(response?.nowPlaying?.artist ?? station.name)
-                    .font(.title3)
-                    .foregroundStyle(.secondary)
-                if let dj = response?.dj?.name {
-                    Text("On air: \(dj)")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+                VStack(spacing: 8) {
+                    Text(response?.nowPlaying?.title ?? "—")
+                        .font(.title)
+                        .bold()
+                    Text(response?.nowPlaying?.artist ?? station.name)
+                        .font(.title3)
+                        .foregroundStyle(.secondary)
+                    if let dj = response?.dj?.name {
+                        Text("On air: \(dj)")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                    if let listeners = response?.listeners?.current {
+                        Text("\(listeners) listening")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
                 }
-                if let listeners = response?.listeners?.current {
-                    Text("\(listeners) listening")
-                        .font(.caption)
-                        .foregroundStyle(.tertiary)
+
+                if let loadError {
+                    Text(loadError)
+                        .foregroundStyle(.red)
+                }
+                if let playerError = player.playerError {
+                    Text(playerError)
+                        .foregroundStyle(.red)
+                }
+
+                HStack(spacing: 24) {
+                    Button {
+                        player.togglePlayPause()
+                    } label: {
+                        Label(player.isPlaying ? "Pause" : "Play", systemImage: player.isPlaying ? "pause.fill" : "play.fill")
+                    }
+                    Button {
+                        isPresentingRequest = true
+                    } label: {
+                        Label("Request a Song", systemImage: "text.bubble")
+                    }
                 }
             }
+            .frame(maxWidth: .infinity)
 
-            if let loadError {
-                Text(loadError)
-                    .foregroundStyle(.red)
-            }
-            if let playerError = player.playerError {
-                Text(playerError)
-                    .foregroundStyle(.red)
-            }
-
-            HStack(spacing: 24) {
-                Button {
-                    player.togglePlayPause()
-                } label: {
-                    Label(player.isPlaying ? "Pause" : "Play", systemImage: player.isPlaying ? "pause.fill" : "play.fill")
-                }
-                Button {
-                    isPresentingRequest = true
-                } label: {
-                    Label("Request a Song", systemImage: "text.bubble")
-                }
-                Button {
-                    isPresentingBooth = true
-                } label: {
-                    Label("Booth", systemImage: "mic")
-                }
+            if let client {
+                SidePanelView(client: client, stationTimeZone: stationTimeZone)
+                    .frame(width: 480)
             }
         }
         .padding(60)
@@ -76,11 +78,6 @@ struct NowPlayingView: View {
         .sheet(isPresented: $isPresentingRequest) {
             if let client {
                 RequestSongView(client: client)
-            }
-        }
-        .sheet(isPresented: $isPresentingBooth) {
-            if let client {
-                BoothView(client: client)
             }
         }
         .task {
@@ -91,6 +88,10 @@ struct NowPlayingView: View {
             pollTask?.cancel()
             player.stop()
         }
+    }
+
+    private var stationTimeZone: TimeZone? {
+        response?.timezone.flatMap(TimeZone.init(identifier:))
     }
 
     @ViewBuilder
@@ -108,7 +109,7 @@ struct NowPlayingView: View {
                     .padding(80)
             }
         }
-        .frame(width: 400, height: 400)
+        .frame(width: 320, height: 320)
         .background(.quaternary)
         .clipShape(RoundedRectangle(cornerRadius: 16))
     }
