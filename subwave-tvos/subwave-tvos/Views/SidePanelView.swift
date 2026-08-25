@@ -34,27 +34,37 @@ struct SidePanelView: View {
     }
 
     var body: some View {
-        VStack(spacing: 16) {
-            Picker("Panel", selection: Binding(
-                get: { selection },
-                set: { selectionRaw = $0.rawValue }
-            )) {
-                ForEach(SidePanel.allCases) { panel in
-                    Label(panel.rawValue, systemImage: panel.systemImage).tag(panel)
-                }
+        // A segmented Picker above a List reliably trapped focus inside the
+        // list on tvOS — scrolling past the first row never handed focus
+        // back up to the picker (confirmed on-device, not just simulator
+        // guesswork). TabView is tvOS's native top-tab-bar idiom and gets
+        // correct up/down-to-tab-bar focus handling for free. Trade-off:
+        // TabView keeps every tab's content alive rather than instantiating
+        // only the selected one, so Booth and Guide now poll continuously
+        // regardless of which tab is showing, not just while visible — an
+        // acceptable cost at 10s/300s intervals for remote navigation that
+        // actually works.
+        TabView(selection: Binding(
+            get: { selection },
+            set: { selectionRaw = $0.rawValue }
+        )) {
+            ForEach(SidePanel.allCases) { panel in
+                content(for: panel)
+                    .tabItem { Label(panel.rawValue, systemImage: panel.systemImage) }
+                    .tag(panel)
             }
-            .pickerStyle(.segmented)
+        }
+    }
 
-            // Only the active panel is instantiated, so switching away stops
-            // its polling for free via the normal .task/.onDisappear lifecycle.
-            switch selection {
-            case .booth:
-                BoothView(client: client)
-            case .guide:
-                ScheduleGuideView(client: client, stationTimeZone: stationTimeZone)
-            case .clock:
-                ClockView(timeZone: stationTimeZone)
-            }
+    @ViewBuilder
+    private func content(for panel: SidePanel) -> some View {
+        switch panel {
+        case .booth:
+            BoothView(client: client)
+        case .guide:
+            ScheduleGuideView(client: client, stationTimeZone: stationTimeZone)
+        case .clock:
+            ClockView(timeZone: stationTimeZone)
         }
     }
 }

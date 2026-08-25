@@ -12,13 +12,8 @@ struct ContentView: View {
 
     var body: some View {
         if let station = store.selectedStation {
-            NavigationStack {
-                NowPlayingView(station: station)
-                    .toolbar {
-                        ToolbarItem(placement: .navigation) {
-                            Button("Stations") { store.selectedStationID = nil }
-                        }
-                    }
+            NowPlayingView(station: station) {
+                store.selectedStationID = nil
             }
         } else {
             StationPickerView(store: store)

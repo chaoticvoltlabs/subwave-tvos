@@ -7,6 +7,7 @@ import SwiftUI
 
 struct NowPlayingView: View {
     let station: Station
+    let onBack: () -> Void
 
     @State private var player = PlayerService()
     @State private var response: NowPlayingResponse?
@@ -23,6 +24,13 @@ struct NowPlayingView: View {
     var body: some View {
         HStack(spacing: 60) {
             VStack(spacing: 32) {
+                // No custom alignment here: a left-pinned back button sitting
+                // far from the (centered) cover art / Play / Request below it
+                // put enough horizontal distance between them to throw off
+                // tvOS's directional focus heuristic — down/right from this
+                // button skipped straight past Play to the side panel.
+                Button("Stations", systemImage: "chevron.left") { onBack() }
+
                 coverArt
 
                 VStack(spacing: 8) {
@@ -76,7 +84,6 @@ struct NowPlayingView: View {
             }
         }
         .padding(60)
-        .navigationTitle(station.name)
         .sheet(isPresented: $isPresentingRequest) {
             if let client {
                 RequestSongView(client: client)

@@ -102,6 +102,10 @@ private struct BoothRow: View {
             }
         }
         .padding(.vertical, 4)
+        // Plain-text rows aren't individually focusable on tvOS by default,
+        // which leaves the whole List as one unscrollable block. This makes
+        // the Siri Remote's swipe move row by row, scrolling naturally.
+        .focusable()
     }
 
     private var label: String {

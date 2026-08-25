@@ -113,6 +113,9 @@ private struct ScheduleBlockRow: View {
             }
         }
         .padding(.vertical, 4)
+        // See BoothRow: plain-text rows need an explicit focus target for
+        // the List to scroll row by row on tvOS.
+        .focusable()
     }
 
     private var timeRange: String {
