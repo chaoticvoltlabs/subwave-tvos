@@ -27,6 +27,14 @@ lists — the Siri Remote focus engine handles navigation for free.
 Schedule/personas (EPG-style browsing) is a possible v1.1, not required for
 a first working build.
 
+## Private stations
+
+To add a station with the stream/private-player password on, type the
+address as `username:password@host` — the username can be anything (e.g.
+`dj:`), only the password after the colon is actually checked. Easy to miss:
+typing just the password with no `user:` prefix isn't a valid address and
+won't authenticate.
+
 ## Development
 
 Xcode project to be created on a Mac (`File > New > Project` targeting tvOS,
