@@ -8,14 +8,21 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var store = StationStore()
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        if let station = store.selectedStation {
+            NavigationStack {
+                NowPlayingView(station: station)
+                    .toolbar {
+                        ToolbarItem(placement: .navigation) {
+                            Button("Stations") { store.selectedStationID = nil }
+                        }
+                    }
+            }
+        } else {
+            StationPickerView(store: store)
         }
-        .padding()
     }
 }
 
