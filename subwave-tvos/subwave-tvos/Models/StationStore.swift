@@ -27,6 +27,13 @@ final class StationStore {
         save()
     }
 
+    func updateStation(_ station: Station, name: String, address: String) {
+        guard let index = stations.firstIndex(where: { $0.id == station.id }) else { return }
+        stations[index].name = name
+        stations[index].address = address
+        save()
+    }
+
     func removeStation(_ station: Station) {
         stations.removeAll { $0.id == station.id }
         if selectedStationID == station.id {

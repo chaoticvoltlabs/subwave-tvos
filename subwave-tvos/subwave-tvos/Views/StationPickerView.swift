@@ -8,6 +8,7 @@ import SwiftUI
 struct StationPickerView: View {
     @Bindable var store: StationStore
     @State private var isPresentingAddStation = false
+    @State private var editingStation: Station?
 
     var body: some View {
         NavigationStack {
@@ -18,10 +19,12 @@ struct StationPickerView: View {
                     } label: {
                         stationRow(station)
                     }
-                }
-                .onDelete { indexSet in
-                    for index in indexSet {
-                        store.removeStation(store.stations[index])
+                    // Long-press (Siri Remote's Menu/click-and-hold) is the
+                    // tvOS way to surface secondary actions on a row whose
+                    // primary tap already does something (select & play).
+                    .contextMenu {
+                        Button("Edit") { editingStation = station }
+                        Button("Delete", role: .destructive) { store.removeStation(station) }
                     }
                 }
 
@@ -35,6 +38,9 @@ struct StationPickerView: View {
         }
         .sheet(isPresented: $isPresentingAddStation) {
             AddStationView(store: store)
+        }
+        .sheet(item: $editingStation) { station in
+            AddStationView(store: store, editingStation: station)
         }
     }
 
