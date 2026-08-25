@@ -13,6 +13,7 @@ struct NowPlayingView: View {
     @State private var coverImage: UIImage?
     @State private var loadError: String?
     @State private var isPresentingRequest = false
+    @State private var isPresentingBooth = false
     @State private var pollTask: Task<Void, Never>?
 
     private var client: SubwaveClient? { SubwaveClient(station: station) }
@@ -63,6 +64,11 @@ struct NowPlayingView: View {
                 } label: {
                     Label("Request a Song", systemImage: "text.bubble")
                 }
+                Button {
+                    isPresentingBooth = true
+                } label: {
+                    Label("Booth", systemImage: "mic")
+                }
             }
         }
         .padding(60)
@@ -70,6 +76,11 @@ struct NowPlayingView: View {
         .sheet(isPresented: $isPresentingRequest) {
             if let client {
                 RequestSongView(client: client)
+            }
+        }
+        .sheet(isPresented: $isPresentingBooth) {
+            if let client {
+                BoothView(client: client)
             }
         }
         .task {

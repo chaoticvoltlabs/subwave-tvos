@@ -35,6 +35,10 @@ struct SubwaveClient {
         try await get("/dj")
     }
 
+    func fetchSession() async throws -> SessionResponse {
+        try await get("/session")
+    }
+
     /// Fetches cover art directly (rather than handing `AsyncImage` a bare
     /// URL) because a station behind its own basic-auth lock needs the same
     /// `Authorization` header every other request here gets.
