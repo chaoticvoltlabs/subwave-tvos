@@ -59,6 +59,7 @@ final class PlayerService {
                 case .failed:
                     self?.playerError = item.error?.localizedDescription ?? "Stream unreachable."
                     self?.isPlaying = false
+                    UIApplication.shared.isIdleTimerDisabled = false
                 default:
                     break
                 }
@@ -77,11 +78,17 @@ final class PlayerService {
         player.play()
         isPlaying = true
         playerError = nil
+        // tvOS's screensaver/sleep timer doesn't know audio is playing on
+        // its own — a radio app is the exact case where that's wrong.
+        // Re-enabled on pause/stop so the TV still sleeps normally the rest
+        // of the time.
+        UIApplication.shared.isIdleTimerDisabled = true
     }
 
     func pause() {
         player?.pause()
         isPlaying = false
+        UIApplication.shared.isIdleTimerDisabled = false
     }
 
     func stop() {
@@ -89,6 +96,7 @@ final class PlayerService {
         player = nil
         isPlaying = false
         statusObservation = nil
+        UIApplication.shared.isIdleTimerDisabled = false
     }
 
     /// Called by the now-playing poller so the lock screen / Control Center
