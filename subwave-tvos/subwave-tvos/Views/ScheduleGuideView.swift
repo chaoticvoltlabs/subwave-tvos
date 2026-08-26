@@ -2,10 +2,10 @@
 //  ScheduleGuideView.swift
 //  subwave-tvos
 //
-//  "Guide" panel — today's show lineup, collapsed from GET /schedule's
-//  24 hourly slots into blocks (see Schedule.swift). Refetched occasionally
-//  rather than polled like Booth/now-playing: a station's lineup for today
-//  doesn't change minute to minute.
+//  "Guide" panel — the rolling next-24-hours lineup, collapsed from GET
+//  /schedule's hourly slots into blocks (see Schedule.swift). Refetched
+//  occasionally rather than polled like Booth/now-playing: a station's
+//  lineup doesn't change minute to minute.
 
 import SwiftUI
 
@@ -26,7 +26,7 @@ struct ScheduleGuideView: View {
             if let loadError, response == nil {
                 ContentUnavailableView(loadError, systemImage: "calendar.badge.exclamationmark")
             } else if blocks.isEmpty {
-                ContentUnavailableView("Nothing left on today's schedule.", systemImage: "calendar")
+                ContentUnavailableView("Nothing on the schedule.", systemImage: "calendar")
             } else {
                 List {
                     Section("Now & Next") {
@@ -45,13 +45,11 @@ struct ScheduleGuideView: View {
         }
     }
 
-    /// Today's blocks that haven't fully aired yet — the on-air one plus
-    /// whatever's still ahead. A guide is for what's coming, not a log of
-    /// what already played.
+    /// The rolling next 24 hours — the on-air block plus whatever's still
+    /// ahead, spanning past midnight when needed. A guide is for what's
+    /// coming, not a log of what already played.
     private var blocks: [ScheduleBlock] {
-        let currentHour = currentHour
-        return (response?.blocksForToday(timeZone: stationTimeZone) ?? [])
-            .filter { $0.endHour > currentHour }
+        response?.blocksForNext24Hours(timeZone: stationTimeZone) ?? []
     }
 
     private var currentHour: Int {
@@ -103,6 +101,11 @@ private struct ScheduleBlockRow: View {
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
+                if isTomorrow {
+                    Text("Tomorrow")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
             }
 
             if isNow {
@@ -118,7 +121,13 @@ private struct ScheduleBlockRow: View {
         .focusable()
     }
 
+    /// `startHour`/`endHour` are offsets from the start of today (0..<48),
+    /// so a block that runs past midnight still prints plain hour-of-day.
     private var timeRange: String {
-        String(format: "%02d:00–%02d:00", block.startHour, block.endHour)
+        String(format: "%02d:00–%02d:00", block.startHour % 24, block.endHour % 24 == 0 ? 24 : block.endHour % 24)
+    }
+
+    private var isTomorrow: Bool {
+        block.startHour >= 24
     }
 }

@@ -44,15 +44,22 @@ struct ScheduleBlock: Identifiable {
 }
 
 extension ScheduleResponse {
-    /// Today's blocks in the station's own week (JS `Date.getDay()`
-    /// indexing), collapsing consecutive hours that share a show id.
-    func blocksForToday(referenceDate: Date = Date(), timeZone: TimeZone? = nil) -> [ScheduleBlock] {
+    /// Blocks covering the rolling 24 hours starting at `referenceDate`,
+    /// built from today's and tomorrow's hourly arrays — both already
+    /// present in this one `/schedule` response — concatenated into a single
+    /// 0..<48 timeline. `startHour`/`endHour` are hour offsets from the start
+    /// of *today*, not hour-of-day, so a block can run past midnight and the
+    /// guide never runs dry near the end of the day.
+    func blocksForNext24Hours(referenceDate: Date = Date(), timeZone: TimeZone? = nil) -> [ScheduleBlock] {
         var calendar = Calendar(identifier: .gregorian)
         if let timeZone { calendar.timeZone = timeZone }
         // Foundation's `.weekday` is 1...7, Sunday-first — same origin as JS's
         // 0-indexed `getDay()`, just off by one.
-        let jsWeekday = calendar.component(.weekday, from: referenceDate) - 1
-        guard let hours = schedule?["\(jsWeekday)"] else { return [] }
+        let jsWeekdayToday = calendar.component(.weekday, from: referenceDate) - 1
+        let jsWeekdayTomorrow = (jsWeekdayToday + 1) % 7
+        let currentHour = calendar.component(.hour, from: referenceDate)
+
+        let timeline = (schedule?["\(jsWeekdayToday)"] ?? []) + (schedule?["\(jsWeekdayTomorrow)"] ?? [])
 
         let showsByID = Dictionary(uniqueKeysWithValues: (shows ?? []).compactMap { show in
             show.id.map { ($0, show) }
@@ -62,16 +69,16 @@ extension ScheduleResponse {
         })
 
         var blocks: [ScheduleBlock] = []
-        for (hour, showID) in hours.enumerated() {
+        for (offset, showID) in timeline.enumerated() {
             if var last = blocks.last, last.showId == showID {
-                last.endHour = hour + 1
+                last.endHour = offset + 1
                 blocks[blocks.count - 1] = last
             } else {
                 let show = showID.flatMap { showsByID[$0] }
                 let host = show?.personaId.flatMap { personasByID[$0] }
-                blocks.append(ScheduleBlock(startHour: hour, endHour: hour + 1, showId: showID, show: show, host: host))
+                blocks.append(ScheduleBlock(startHour: offset, endHour: offset + 1, showId: showID, show: show, host: host))
             }
         }
-        return blocks
+        return blocks.filter { $0.endHour > currentHour && $0.startHour < currentHour + 24 }
     }
 }
