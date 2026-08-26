@@ -1,31 +1,44 @@
 # subwave-tvos
 
 A native tvOS listener client for [SUB/WAVE](https://github.com/perminder-klair/subwave)
-stations. Standalone project — related to [ProbablyTV](../ProbableTV) only in
-that it's a technical warm-up (AVPlayer + Siri Remote + polling patterns in
-Swift/SwiftUI), not a shared codebase. The two are otherwise fully isolated.
+stations — an internet radio platform where an AI DJ hosts the show, picks
+music, and takes listener song requests live.
 
-See the feasibility note this project grew out of:
-[`ProbableTV/docs/notes/tvos-subwave-player.md`](../ProbableTV/docs/notes/tvos-subwave-player.md).
+Built as an ordinary tvOS app against SUB/WAVE's JSON REST API: `AVPlayer` on
+the Icecast stream, `URLSession`/`Codable` polling for now-playing data, plain
+SwiftUI focusable lists driven by the Siri Remote. No WebView, no third-party
+dependencies.
 
-## Why native, not a WebView wrapper
+## Features
 
-SUB/WAVE exposes a clean, mostly-unauthenticated JSON REST API purpose-built
-for listener clients (see that project's `docs/api.md`), so this doesn't need
-to embed a web player. It's an ordinary tvOS app shape: `AVPlayer` on a stream
-URL, `URLSession`/`Codable` polling `/now-playing`, standard SwiftUI focusable
-lists — the Siri Remote focus engine handles navigation for free.
+- **Station picker** — add any number of stations by address, switch between
+  them, edit or remove saved ones
+- **Playback** — `AVPlayer` streaming with full Now Playing Info Center /
+  remote-control integration (play, pause, skip from the remote or Control
+  Center); the screen stays awake while audio is playing
+- **Now Playing** — current track and artist, cover art, on-air DJ persona,
+  live listener count
+- **Song requests** — send a free-text request to the DJ and watch it resolve
+- **Side panel**, switchable per station:
+  - **Booth** — a live log of the DJ's on-air commentary and track picks
+  - **Guide** — the rolling next-24-hours programme schedule
+  - **Clock** — an analog clock set to the station's own timezone
+- **Private stations** — stations gated with a listener password are fully
+  supported (see below)
 
-## Planned v1 scope
+## Requirements
 
-- Station picker (address + optional name, stored locally)
-- Playback via `AVPlayer` on the Icecast stream mount + Now Playing Info Center
-- Now-playing display: track/artist/album, cover art (`/cover/:id`), on-air DJ persona, listener count
-- Song requests: `POST /request` + poll `GET /request/:id`
-- Private-station support: HTTP Basic Auth on the stream URL
+- tvOS 26 or later
+- Xcode 26 or later, to build
+- An Apple Developer account to run on a physical Apple TV (not required for
+  the Simulator)
 
-Schedule/personas (EPG-style browsing) is a possible v1.1, not required for
-a first working build.
+## Getting started
+
+1. Clone the repo and open `subwave-tvos/subwave-tvos.xcodeproj` in Xcode.
+2. Pick an Apple TV Simulator or a physical Apple TV as the run destination.
+3. Build and run, then add a station by its address (e.g.
+   `radio.example.com` or `https://radio.example.com`).
 
 ## Private stations
 
@@ -35,13 +48,9 @@ address as `username:password@host` — the username can be anything (e.g.
 typing just the password with no `user:` prefix isn't a valid address and
 won't authenticate.
 
-## Development
+## Copyright & license
 
-Xcode project to be created on a Mac (`File > New > Project` targeting tvOS,
-SwiftUI lifecycle) inside this cloned repo. This machine (a Linux dev VM) is
-used for planning and non-Xcode-specific source editing; actual builds, the
-simulator, and signing require Xcode on macOS.
+PolyForm Noncommercial License 1.0.0 with Commercial Use by Explicit
+Permission Only. See [LICENSE.txt](LICENSE.txt).
 
-**Signing:** use Xcode's "Automatically manage signing" tied to your Apple
-Developer account/team, so it resolves correctly on any Mac you build from —
-no certificates or provisioning profiles to move around or commit.
+Copyright (c) 2026 Robin Kluit / Chaoticvolt.
